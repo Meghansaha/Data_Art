@@ -1,0 +1,54 @@
+---
+title: "Exploring Geom_Shapes (ggplot)"
+output: html_notebook
+---
+
+# **Purpose & Generating Data**
+
+I think understanding the different available geoms in ggplot can help in understanding what patterns, shapes, etc. are possible. Before looking at some gglpot functions, I want to make a quick generated data sample:
+
+```{r setup, include = FALSE}
+
+#Library install and load in.#
+`Required Packages` <- c("flexdashboard","knitr","purrr","readr","tidyverse","extrafont","leaflet","leafem","crosstalk","DT","summarywidget") 
+`New Packages` <- `Required Packages`[!(`Required Packages` %in% installed.packages()[,"Package"])]
+if(length(`New Packages`)) install.packages(`New Packages`)
+invisible(suppressPackageStartupMessages(suppressWarnings(lapply(`Required Packages`, require, character.only=T))))
+
+```
+
+
+```{r datacreation}
+#Creating the data frame===
+data <- data.frame(X = seq(0,100,0.1),
+                   Y = seq(0,500.2,0.5),
+                   Xend = seq(1,401.2,0.4),
+                   Yend = seq(0,300.2,0.3))
+```
+
+## **Geom_Lines**
+
+```{r linedata, include = TRUE}
+#Plotting lines
+lineplot <- data %>%
+  ggplot(aes(x = X, y = Y)) + 
+  geom_line()
+
+#Viewing it===
+lineplot 
+```
+
+
+
+## **Geom_Curve**
+
+```{r curvedata, include = TRUE}
+#Plotting lines
+curveplot <- data %>%
+  ggplot(aes(x = X, y = Y)) + 
+  geom_curve(aes(xend = Xend, yend = Yend), data = data)
+
+#Viewing it===
+curveplot 
+```
+
