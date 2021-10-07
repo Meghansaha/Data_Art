@@ -17,7 +17,7 @@ pal.iter <- end/500 #(500 = palette length * each option in the rep fx below)
 data <- tibble(x = x,
               y = cos((x)*theta))
 
-#Adding a color palette. Numbers have to change b
+#Adding a color palette. Numbers have to change based on star, end, theta, etc.
 data <- data %>%
   mutate(color = rep(rep(RColorBrewer::brewer.pal(10,"PRGn"), each = 50),pal.iter)) %>%
   mutate(alpha = sample(runif(10,.2,1.0),nrow(data), replace = TRUE))
