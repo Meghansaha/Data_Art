@@ -30,4 +30,3 @@ Rainbow_Rose <- data %>%
 
 # View it #
 Rainbow_Rose
-
