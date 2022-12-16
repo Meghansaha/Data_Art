@@ -127,7 +127,7 @@ ggplot(storm_background,aes(x,y))+
   geom_polygon(data = forever_background, 
                fill = "#398AB9")+ 
   geom_segment(data = sky, aes(xend = xend, yend = yend), 
-               size = sky_size, 
+               linewidth = sky_size, 
                alpha = .1, 
                color = sky_pal,
                position = position_jitter(height = 5))+
@@ -157,6 +157,6 @@ ggplot(storm_background,aes(x,y))+
             size = 12,
             family = "Indie Flower",
             fontface = "bold")+
-  theme(plot.background = element_rect(size = 20, color = "#666666"))
+  theme(plot.background = element_rect(linewidth= 20, color = "#666666"))
   
 

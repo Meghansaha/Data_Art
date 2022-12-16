@@ -11,7 +11,7 @@ random_data <- tibble(y = sample(1:500,100),
 
 
 
-Rings <- ggplot(random_data, aes(xend = 0, yend = y, x = x, y = y,color = color, alpha = alpha, size = size))+
+ggplot(random_data, aes(xend = 0, yend = y, x = x, y = y,color = color, alpha = alpha, size = size))+
   geom_segment(color = random_data$color)+
   coord_polar(theta = "x", clip = "off", start = -3.14)+
   scale_x_continuous(lim=c(0, 1000)) +
@@ -26,7 +26,7 @@ Rings <- ggplot(random_data, aes(xend = 0, yend = y, x = x, y = y,color = color,
   
 
 
-ggsave(file="creations/Circles/Rings.svg", plot=test, width=12.5, height=7.03125)
+
 
 
   

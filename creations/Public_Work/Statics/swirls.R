@@ -18,16 +18,14 @@ circle_data <- data.frame(x = radius*cos(theta),
                               #To remove the warning set "n" to length(theta) and see how that affects the visual#
 
 # Final Plotting of the swirl/manipulated circle
-final_swirl <- circle_data %>%
+circle_data %>%
 ggplot(aes(x = x, y = y))+
   geom_polygon(color = "#d9a045", size = .1, fill ="#200538")+ #Using the polygon geom forces ggplot to create spaced solid figures#
   theme_void()+
   theme(plot.background = element_rect(fill = "#0e011a"),
         panel.background = element_rect(fill = "#0e011a"),
-        legend.position = "none")
-
-# Saving the final image out into the working directory
-ggsave( "creations/Circles/swirl.png",final_swirl, device = "png", dpi = 1000, height = 6, width = 6, units = "in")
+        legend.position = "none")+
+  coord_equal()
 
 
 
