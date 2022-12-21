@@ -1,0 +1,361 @@
+---
+title: "Making Shapes Manually in ggplot2"
+format: html
+theme:
+  light: yeti
+  dark: superhero
+toc: true
+toc-depth: 4
+execute: 
+  warning: false
+knitr:
+  opts_chunk:
+    message: false
+    fig.align: center
+---
+
+## About
+
+I want to make shapes manually. So here's where I'll drop processes for that as I learn. The hardest part so far has been converting nonparametric equations into parametric equations that will display the shapes as expected on a Cartesian coordinate system.
+
+## Circles
+
+### Converting from Non-Parametric to Parametric For a Unit Circle
+
+1.    $y^2 + x^2 = r^2$     ← Non-Parametric
+
+2.    $\frac{y^2}{r^2} + \frac{x^2}{r^2} = 1$
+
+3.    $(\frac{y}{r})^2 + (\frac{x}{r}^2) =1$
+
+4.    $sin^2\theta + cos^2\theta = 1$
+
+5.    $sin \theta = \frac{y}{r}$<br>
+      $cos \theta = \frac{x}{r}$
+
+6.    $x = cos(\theta)$ ← Parametric<br>
+      $y = sin(\theta)$ ← Parametric
+      
+> In order to create the coordinates for a circle, we have to create a system that will generate `x` and `y` points that will visually represent a circle when plotted on ggplot2's carteisan plane.
+
+#### Creating the Data
+1.    Decide how many angles/points/slices of the circle you wish to calculate. = `angle_n`.
+2.    Create a sequence of angles (thetas aka $\theta$) based on the amount of angles/points/slices. = `theta`.
+3.    Create a system of coordinates (aka data frame) of calculated `x` and `y` points using the `theta`. = `circle_df` 
+4.    Plot the dataframe with appropriate aesthetics and geoms desired.
+5.    Use `coord_equal()` for better scaled drawing of circles. (otherwise, it may look like an [ellipse](https://en.wikipedia.org/wiki/Ellipse))
+<br>
+
+<sub>*Recall that an angle consists of 360 $\degree$ which in radians ($rad$) equates to $2pi$*.</sub>
+
+```{r circlesnip1}
+library(ggplot2) #For plotting
+library(tibble) #For cleaner df manipulation (base can be used)
+
+#Step 1====
+#Setting 360 points (angles) that lie in a circle#
+angle_n <- 50
+
+#Step 2====
+#Calculating angle_n angles/points within a circle#
+theta <- seq(from = 0,
+             to = 2 * pi, 
+             length = angle_n)
+
+#Step 3====
+#Creating a dataframe or corresponding x and y values for the circle using theta
+circle_df <- tibble(x = cos(theta),
+                    y = sin(theta),
+                    label = 0:(angle_n-1))
+
+#Step 4 and 5====
+#Plotting the circle
+circle_df |>
+  ggplot(aes(x,y, label = label)) +
+  geom_path() +
+  geom_label(size = 2) + #labels added for learning/comparative purposes
+  coord_equal()
+
+```
+
+### Performing Transformations on a Circle
+#### Movement of a circle
+
+Moving a circle on a plane requires simply adding or subtracting values from the `x` and `y` points of the existing system accordingly.
+
+<br>
+<br>
+
+- <span style='color:cornflowerblue'>**Horizontal**</span> movement requires a value added or subtracted to/from the `x` variable in the system.
+
+
+```{r circlesnip2}
+library(purrr) #For list manipulation
+library(dplyr) #for data wrangling
+
+#Moving the unit circle horizontally by 1 left (subtract) and right (addition)
+trans_values <- c(-1,1)
+trans_directions <- c("left", "right")
+
+horizontal_trans <- map2_df(trans_values, trans_directions, ~circle_df |>
+                              mutate(x = x + .x,
+                                     direction = .y)
+                            )
+
+horizontal_trans |>
+  ggplot(aes(x,y, group = direction)) +
+  geom_path(data = circle_df, aes(x,y), 
+            linetype = 3,
+            linewidth = 2,
+            inherit.aes = FALSE) +
+  geom_path(color = "cornflowerblue",
+            linewidth = 2) +
+  coord_equal()
+  
+
+```
+
+<br>
+
+-   <span style='color:tomato'>**Vertical**</span> movement requires a value added or subtracted to/from the `y` variable in the system.
+
+```{r circlesnip3}
+
+#Moving the unit circle vertically by 1 down (subtract) and up (addition)
+trans_values <- c(-1,1)
+trans_directions <- c("down", "up")
+
+vertical_trans <- map2_df(trans_values, trans_directions, ~circle_df |>
+                              mutate(y = y + .x,
+                                     direction = .y)
+                            )
+
+vertical_trans |>
+  ggplot(aes(x,y, group = direction)) +
+  geom_path(data = circle_df, aes(x,y), 
+            linetype = 3,
+            linewidth = 2,
+            inherit.aes = FALSE) +
+  geom_path(color = "tomato",
+            linewidth = 2) +
+  coord_equal()
+  
+
+```
+
+-   <span style='color:darkmagenta'>**Diagonal**</span> movement requires a value added or subtracted to/from both the `x` and `y` variables in the system.
+
+```{r circlesnip4}
+
+#Moving the unit circle diagonally by 1 in all four main quadrants.
+trans_xvalues <- c(-1,1,-1,1)
+trans_yvalues <- c(-1,1,1,-1)
+
+trans_directions <- c("down-left", "up-right", "up-left", "down-right")
+
+circle_options <- list(trans_xvalues,
+                       trans_yvalues,
+                       trans_directions)
+
+diagonal_trans <- pmap_df(circle_options, ~circle_df |>
+                            mutate(x = x + ..1,
+                                   y = y + ..2,
+                                   direction = ..3)
+)
+
+diagonal_trans |>
+  ggplot(aes(x,y, group = direction)) +
+  geom_path(data = circle_df, aes(x,y), 
+            linetype = 3,
+            linewidth = 2,
+            inherit.aes = FALSE) +
+  geom_path(color = "darkmagenta",
+            linewidth = 2) +
+  coord_equal()
+  
+
+```
+
+<br>
+
+#### Visual Summary
+
+- <span style='color:cornflowerblue'>Horizontal</span> (`x` variable operations)
+- <span style='color:tomato'>Vertical</span> (`y` variable operations)
+- <span style='color:darkmagenta'>Diagonal</span> (`x` and `y` variable operations)
+
+```{r circlesnip4-2, echo=FALSE}
+
+circle_df |>
+  ggplot(aes(x,y)) +
+  geom_path(linetype = 3,
+            linewidth = 2) +
+    geom_path(data = horizontal_trans, aes(x,y, group = direction),
+            color = "cornflowerblue",
+            linewidth = 2,
+            inherit.aes = FALSE) +
+    geom_path(data =vertical_trans, aes(x,y, group = direction),
+            color = "tomato",
+            linewidth = 2,
+            inherit.aes = FALSE)  +
+  geom_path(data = diagonal_trans, aes(x,y, group = direction),
+            color = "darkmagenta",
+            linewidth = 2,
+            inherit.aes = FALSE) +
+  coord_equal()
+
+
+```
+
+
+
+#### Resizing/Scaling a Circle
+
+Scaling/resizing a circle on a plane requires multiplying or dividing values from the `x` and `y` points of the existing system accordingly.
+
+<span style='color:orange'>Multiplying</span> both the `x` and `y` variables will **increase** the scale of the circle (*size it up/make it larger* by the value)
+
+<br>
+
+```{r circlesnip5}
+
+#Increasing the size of the circle by 5 units on both the x and y axis - multiplying.
+trans_value <- 5
+
+
+multi_trans <- map_df(trans_value, ~circle_df |>
+                            mutate(x = x * .x,
+                                   y = y * .x)
+)
+
+multi_trans |>
+  ggplot(aes(x,y)) +
+  geom_path(data = circle_df, aes(x,y), 
+            linetype = 3,
+            linewidth = 2,
+            inherit.aes = FALSE) +
+  geom_path(color = "orange",
+            linewidth = 2) +
+  coord_equal()
+  
+
+```
+
+<br>
+
+<span style='color:limegreen'>Dividing</span> both the `x` and `y` variables will **decrease** the scale of the circle (*size it down/make it smaller* by the inverse of the value)
+
+```{r circlesnip6}
+
+#Decreasing the size of the circle by 1/2 units on both the x and y axis - dividing.
+trans_value <- 2
+
+
+div_trans <- map_df(trans_value, ~circle_df |>
+                            mutate(x = x / .x,
+                                   y = y / .x)
+)
+
+div_trans |>
+  ggplot(aes(x,y)) +
+  geom_path(data = circle_df, aes(x,y), 
+            linetype = 3,
+            linewidth = 2,
+            inherit.aes = FALSE) +
+  geom_path(color = "limegreen",
+            linewidth = 2) +
+  coord_equal()
+
+
+```
+
+<br>
+
+<span style='color:brown'>Dividing and Multiplying</span> the `x` and `y` variables will **increase** and **decrease** the scale of the circle based on which variable receives which operation. In the following example, the `x` variable is multiplied so increases by 2 along the `x axis`. The `y` variable is divided by 2 so is decreased by that inverse (1/2). This will result in an ellipse most of the time.
+
+```{r circlesnip7}
+
+#Decreasing the size of the circle by 1/2 units on both the x and y axis - dividing.
+trans_value <- 2
+
+
+combo_trans1 <- map_df(trans_value, ~circle_df |>
+                            mutate(x = x * .x,
+                                   y = y / .x)
+)
+
+combo_trans1 |>
+  ggplot(aes(x,y)) +
+  geom_path(data = circle_df, aes(x,y), 
+            linetype = 3,
+            linewidth = 2,
+            inherit.aes = FALSE) +
+  geom_path(color = "brown",
+            linewidth = 2) +
+  coord_equal()
+
+
+```
+
+<span style='color:magenta'>Dividing and Multiplying with different values</span> for the `x` and `y` variables will **increase** and **decrease** the scale of the circle based on which variable receives which operation. In the following example, the `x` variable is multiplied so increases by 2 along the `x axis`. The `y` variable is divided by 6 so is decreased by that inverse (1/6  ≈ .1666). This will result in an ellipse most of the time.
+
+```{r circlesnip8}
+
+#Decreasing the size of the circle by 1/2 units on both the x and y axis - dividing.
+trans_valuex <- 2
+trans_valuey <- 6
+
+
+combo_trans2 <- map2_df(trans_valuex, trans_valuey, ~circle_df |>
+                            mutate(x = x * .x,
+                                   y = y / .y)
+)
+
+combo_trans2 |>
+  ggplot(aes(x,y)) +
+  geom_path(data = circle_df, aes(x,y), 
+            linetype = 3,
+            linewidth = 2,
+            inherit.aes = FALSE) +
+  geom_path(color = "magenta",
+            linewidth = 2) +
+  coord_equal()
+
+
+```
+
+
+#### Visual Summary
+
+-   <span style='color:orange'>Multiplying</span>
+-   <span style='color:limegreen'>Dividing</span>
+-   <span style='color:brown'>Dividing and Multiplying</span>
+-   <span style='color:magenta'>Dividing and Multiplying with different values</span>
+
+```{r circlesnip9, echo=FALSE}
+
+circle_df |>
+  ggplot(aes(x,y)) +
+  geom_path(linetype = 3,
+            linewidth = 2
+            ) +
+  geom_path(data = multi_trans,
+            color = "orange",
+            linewidth = 2
+            ) +
+  geom_path(data = div_trans,
+            color = "limegreen",
+            linewidth = 2
+            ) +
+  geom_path(data = combo_trans1,
+            color = "brown",
+            linewidth = 2
+            ) +
+  geom_path(data = combo_trans2,
+            color = "magenta",
+            linewidth = 2
+            ) +
+  coord_equal()
+
+
+```
