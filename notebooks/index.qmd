@@ -1,0 +1,11 @@
+---
+title: "Data Art Notebooks"
+format: html
+editor: visual
+---
+
+Someday I'll make this nice and pretty and organized. Today is not that day 😬
+
+## Notebooks
+
+-   [Making Shapes Manually in ggplot2](manual_shapes.html "Making Shapes Manually in ggplot2")
