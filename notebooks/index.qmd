@@ -4,7 +4,9 @@ format: html
 editor: visual
 ---
 
-Someday I'll make this nice and pretty and organized. Today is not that day 😬
+Someday I'll make this nice and pretty and organized.
+
+Today is not that day 😬
 
 ## Notebooks
 
