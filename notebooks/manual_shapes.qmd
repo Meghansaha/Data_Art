@@ -302,7 +302,8 @@ combo_trans1 |>
 
 ```{r circlesnip8}
 
-#Decreasing the size of the circle by 1/2 units on both the x and y axis - dividing.
+#Increasing the size of the circle by 2 on the x axis (multiplying)
+#Decreasing the size of the circle by 1/6 units on the y axis - dividing.
 trans_valuex <- 2
 trans_valuey <- 6
 
