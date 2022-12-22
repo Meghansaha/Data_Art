@@ -10,4 +10,4 @@ Today is not that day 😬
 
 ## Notebooks
 
--   [Making Shapes Manually in ggplot2](manual_shapes.html "Making Shapes Manually in ggplot2")
+-   [Making Shapes Manually in ggplot2](manual_shapes.qmd "Making Shapes Manually in ggplot2")

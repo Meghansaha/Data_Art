@@ -54,7 +54,7 @@ library(ggplot2) #For plotting
 library(tibble) #For cleaner df manipulation (base can be used)
 
 #Step 1====
-#Setting 360 points (angles) that lie in a circle#
+#Setting 50 points (slices) that lie in a circle#
 angle_n <- 50
 
 #Step 2====
