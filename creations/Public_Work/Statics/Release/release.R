@@ -2,6 +2,8 @@
 library(tidyverse)
 library(artpack)
 library(ambient)
+library(ggrastr)
+
 
 # Image Specs----
 canvas_size <- list("x_lim" = c(0, 100), "y_lim" = c(0, 70))
@@ -220,12 +222,7 @@ make_mountain_layer <-
             data = df_mountain |> filter(group == "outline"),
             aes(x, y, group = group),
             color = mountain_color,
-            linewidth = overlay_linewidth,
-            alpha = sample(
-              seq(.3, 1, l = 100),
-              nrow(df_mountain |> filter(str_detect(group, "outline"))),
-              replace = TRUE
-            )
+            linewidth = overlay_linewidth
           )
         )
       }
@@ -270,7 +267,7 @@ back_mountain_layer <-
     sky_color,
     sky_color,
     .4,
-    .6,
+    .1,
     .8
   )
 
@@ -282,7 +279,7 @@ middle_mountain_layer <-
     sky_color,
     sky_color,
     .6,
-    .7,
+    .1,
     1
   )
 
@@ -294,7 +291,7 @@ bottom_mountain_layer <-
     sky_color,
     sky_color,
     .8,
-    .8,
+    .1,
     1.5
   )
 
@@ -316,52 +313,77 @@ df_sky_grid <-
     )
   )
 
-# Make the sky texture----
-df_sky_texture_left_specs <-
-  tibble(
-    x = canvas_size$x_lim[2] / 6,
-    y = canvas_size$y_lim[2] / 10,
-    radius = seq(50, 1, l = 35)
-  ) |>
-  mutate(
-    n = row_number(),
-    group_val = paste0(str_pad(n, width = 2, pad = "0"), "_left_ring")
-  )
-
-df_sky_texture_right_specs <-
-  tibble(
-    x = canvas_size$x_lim[2] / 1.2,
-    y = canvas_size$y_lim[2] / 1.2,
-    radius = seq(50, 1, l = 35)
-  ) |>
-  mutate(
-    n = row_number(),
-    group_val = paste0(str_pad(n, width = 2, pad = "0"), "_right_ring")
-  )
-
-df_sky_texture_left <-
-  pmap(df_sky_texture_left_specs, \(x, y, radius, n, group_val) {
-    circle_data(x, y, radius, "#ffffff") |>
-      mutate(group = group_val)
-  }) |>
-  list_rbind()
-
-df_sky_texture_right <-
-  pmap(df_sky_texture_right_specs, \(x, y, radius, n, group_val) {
-    circle_data(x, y, radius, "#ffffff") |>
-      mutate(group = group_val)
-  }) |>
-  list_rbind()
 
 # texture overlay----
-df_overlay <-
-  grid_maker(
-    canvas_size$x_lim,
-    canvas_size$x_lim,
-    1000,
-    fill_pal = c("#ffffff", "#000000"),
-    fill_style = "random"
+df_overlay_grid <-
+  expand_grid(
+    x = seq(canvas_size$x_lim[1], canvas_size$x_lim[2], l = 300),
+    y = seq(canvas_size$y_lim[1], canvas_size$y_lim[2], l = 300)
   )
+
+vec_group_nums <-
+  group_numbers(seq_len(nrow(df_overlay_grid)), prefix = "square", sep = "-")
+
+df_overlay <-
+  df_overlay_grid |>
+  select(x, y) |>
+  mutate(
+    group = vec_group_nums
+  ) |>
+  pmap(\(x, y, group) {
+    square_data(
+      x,
+      y,
+      size = 1,
+      n_points = 4,
+      group_var = TRUE,
+      group_prefix = group
+    )
+  }) |>
+  list_rbind()
+
+# Bloom----
+y_pos <- seq(23, 1, l = 300)
+df_bloom_init <-
+  wave_data(
+    canvas_size$x_lim[1],
+    canvas_size$x_lim[2],
+    freq = 2.6,
+    n_points = 100,
+    amplify = 2
+  ) |>
+  mutate(
+    t = row_number(),
+    phase = 5 * sin(0.59 * t)^2,
+    t_phase = t + phase
+  ) |>
+  mutate(
+    x = approx(t, x, xout = t_phase, rule = 2)$y,
+    y = (approx(t, y, xout = t_phase, rule = 2)$y)
+  )
+
+bloom_colors <- colorRampPalette(c(sky_color, "#ffffff"))(300)
+lst_bloom_opts <-
+  list(
+    y_pos,
+    bloom_colors,
+    group_numbers(1:300, prefix = "bloom", sep = "_"),
+    seq(0, 1, l = 300)
+  )
+df_bloom <-
+  pmap(
+    lst_bloom_opts,
+    \(y_pos, fill, group_num, alpha) {
+      df_bloom_init |>
+        mutate(
+          y = y + y_pos,
+          group = group_num,
+          fill = fill,
+          alpha = alpha,
+        )
+    }
+  ) |>
+  list_rbind()
 
 
 # Make the final image----
@@ -376,39 +398,28 @@ ggplot() +
     size = sample(seq(10, 60, l = 50), nrow(df_sky_grid), replace = TRUE),
     position = position_jitter(.4, .01)
   ) +
-  geom_path(
-    data = df_sky_texture_left,
+  rasterize(
+    geom_polygon(
+      data = df_bloom,
+      aes(x, y, group = group),
+      fill = df_bloom$fill,
+      alpha = df_bloom$alpha
+    ),
+    position = position_jitter(width = .01, height = .002)
+  ) +
+  rasterize(geom_polygon(
+    data = df_overlay,
     aes(x, y, group = group),
-    color = df_sky_texture_left$color,
-    alpha = sample(
-      seq(0, .2, l = 50),
-      nrow(df_sky_texture_left),
+    fill = sample(
+      colorRampPalette(c("#000000", "#ffffff"))(30),
+      nrow(df_overlay),
       replace = TRUE
     ),
-    position = position_jitter(width = .01, height = .001)
-  ) +
-  geom_path(
-    data = df_sky_texture_right,
-    aes(x, y, group = group),
-    color = df_sky_texture_right$color,
-    alpha = sample(
-      seq(0, .2, l = 50),
-      nrow(df_sky_texture_right),
-      replace = TRUE
-    ),
-    position = position_jitter(width = .01, height = .001)
-  ) +
+    alpha = sample(seq(.001, .01, l = 150), nrow(df_overlay), replace = TRUE)
+  )) +
   back_mountain_layer +
   middle_mountain_layer +
   bottom_mountain_layer +
-  geom_point(
-    data = df_sky_grid,
-    aes(x, y),
-    color = sample(c("#ffffff", "#000000"), nrow(df_sky_grid), replace = TRUE),
-    alpha = sample(seq(.001, .01, l = 30), nrow(df_sky_grid), replace = TRUE),
-    size = sample(seq(1, 10, l = 50), nrow(df_sky_grid), replace = TRUE),
-    position = position_jitter(.4, .01)
-  ) +
   coord_equal(
     xlim = canvas_size$x_lim,
     ylim = canvas_size$y_lim,
@@ -416,10 +427,11 @@ ggplot() +
   )
 
 ggsave(
-  "test.png",
+  "release.png",
   width = 11,
   height = 8.5,
   units = "in",
   device = "png",
+  dpi = 300,
   bg = "transparent"
 )
